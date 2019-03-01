@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Cross Site Request Forgery Vulnerability - JSONP</title>
+		<link rel="stylesheet" href="../style.css">
+	</head>
+	<body>
+		<div class="wrapper">
+			<h1>Cross Site Request Forgery Vulnerability with JSONP</h1>
+			<h2 id="introduction">Introduction</h2>
+			<p>
+				A cross site request forgery vulnerability is a cross site mechanism that can force a victim's browser to send an authenticated web request. In a successful attack, the victim's browser sends a malicious request (crafted by the attacker) to a web site and the web site handles it as if the victim requested it directly. This is a similar vulnerability to cross site scripting because it involves exploitation of trust between web sites and web browsers. However, cross site request forgery exploits a web site's trust of an authenticated user's browsing session, whereas cross site scripting exploits the trust a user has for a web site's content.
+			</p>
+
+			<p>
+                JSON, or JavaScript Object Notation is a commonly known data format for web applications. JSONP stands for JSON with Padding, where the "padding" is a specified JavaScript callback function. Developers decided to use JSONP to get around web browsers' Same Origin Policy, which specifies that requests for data cannot be made to URLS of a different domain , protocol, or port. For example, a browser rendering <code>https://foo.com</code> cannot make a request to <code>https://api.foo.com</code> because they have different origins. The workaround to this is to wrap the desired JSON in a JavaScript function, and then have the browser render a <code>&ltscript&gt</code> tag where the <code>src</code> attribute is the URI. The returned JSON and JavaScript function is then rendered by the client's browser, bypassing the Same Origin Policy.
+			</p>
+
+			<h3 id="description">Exercise Description</h3>
+			<p>Before we get into details, </p>
+			
+			<p>
+                In this exercise, we provide a two small HTTP servers developed using Flask, a python HTTP microframework.  The first server, <code>vulnerable.py</code>, returns static json wrapped in a provided callback function to anyone who makes a GET request to it. The second server, <code>evil.py</code>, provides an evil HTML file that will send data from the user's browser to the evil webserver. These naive servers do not have any form of authentication or support querying data. For the purposes of this exercise, we will not consider the implications of these traits. Instead,we will focus on the potential for cross site request forgery. Your objective is to craft a request forgery that will act on behalf of the client to send data from the vulnerable web server to malicious web server.
+			</p>
+
+			<p>
+                The program has three source files: <code>vulnerable.py</code>, <code>evil.py</code>, and <code>templates/index.html</code>. The first server, <code>vulnerable.py</code>, will run on <code>localhost:5000</code> while the second, <code>evil.py</code>, will run on <code>localhost:5001</code>. The following table summarizes each file's purpose.
+			</p>
+
+			<table style="width: 100%">
+				<tr>
+					<th>Filename</th>
+					<th>URL Path</th>
+					<th>Description</th>
+				</tr>
+				<tr>
+					<td><code>vulnerable.py</code></td>
+					<td><code>localhost:5000</code></td>
+					<td>Returns JSONP to a calling client.<b> You will not need to change this file.</b></td>
+				</tr>
+				<tr>
+					<td><code>evil.py</code></td>
+					<td><code>localhost:5001</code></td>
+					<td>Returns to the client a malicious HTML page that will exploit a vulnerable JSONP serving server. <b>You will need to change this file to complete the exploit.</b></td>
+                </tr>
+				<tr>
+					<td><code>templates/evil.html</code></td>
+					<td><code>localhost:5001</code></td>
+					<td>This is the malicious HTML returned to the client when <code>evil.py</code>'s root route is visited. <b>You will need to change this file to complete the exploit.</b></td>
+                </tr>
+                <tr>
+					<td><code>mitigated.py</code></td>
+					<td><code>localhost:5002</code></td>
+					<td>Server to be used to demonstare the mitigation of a JSONP attack. <b>You will need to modify this file to complete the mitigation.</td>
+				</tr>
+				<tr>
+						<td><code>mitigated.html</code></td>
+						<td><code>localhost:5002</code></td>
+						<td>Webpage rendered by <code>mitigated.py</code>, which accesses data from <code>localhost:5000</code> without JSONP.</b></td>
+					</tr>
+                
+			</table>
+
+			<h3 id="mitigation_description">Vulnerability Mitigation</h3>
+			<p>
+				Two common protections against cross site request forgery are checking origin headers and implementing session-specific synchronizer tokens. For a nearly comprehensive approach to cross site request forgery mitigation, see the <a href="https://www.owasp.org/index.php/Cross-Site_Request_Forgery_(CSRF)_Prevention_Cheat_Sheet">OWASP Cross Site Request Forgery Prevention Cheat Sheet</a>. In many situations, it is preferred to use existing frameworks or libraries to protect against cross site request forgeries.
+			</p>
+
+			<p>
+				For this exercise, however, we will take a different approach. The goal of JSONP is to render data from a different origin. To do this, we will set up a proxy to fetch the desired data in the backend within the same origin, and then return that to the front end. 
+			</p>
+
+			<h2 id="instructions">Exercise Instructions</h2>
+			<p>
+				This exercise will be completed in the web browser and on the command line terminal of the provided virtual machine. To open the terminal, right-click on the "EXERCISES" directory and select "Open in Terminal". Then open one more terminal tab with <code>ctrl+shift+t</code> to have two tabs running. Enter the following command in each tab to change into the exercise directory:
+			</p>
+
+			<pre><code>$ cd 3.9.3_JSONP</code></pre>
+
+			<h3 id="compile" class="steps">Compile the Program</h3>
+			<p>
+                Python interprets your code at runtime, so there is no compilation step needed.
+			</p>
+			
+			<h3 id="run" class="steps">Run the Program</h3>
+			<p>
+                You will need to run one server in one terminal tab, and another in the other terminal tab. In the first terminal window, enter the following:
+			</p>
+
+			<pre><code>$ python3 vulnerable.py</code></pre>
+
+            <p>
+                In the second terminal tab, run the other server likeso:
+            </p>
+
+            <pre><code>$ python3 evil.py</code></pre>
+
+			<p>
+                To stop either server, type <code>ctrl+c</code> in the command line interface. Currently, <code>vulnerable.py</code> does not have a web interface. If you visit <code>localhost:5000</code>, you will see JSON. The server is in place to simply return JSONP as a contrived example of what a production webserver may do. However, the evil webserver, <code>evil.py</code> has a web interface that you can visit by going to <code>localhost:5001</code> while <code>localhost:5000</code> is running.
+                To view the web site, open Firefox by clicking the globe icon in the bottom left hand corner of the screen. The malicious server is attached to <code>http://localhost:5001</code>.
+			</p>
+
+            <p>
+                Here is a diagram representing the attack. The first step is for the user to authenticate with a vulnerable website. Then, the user needs to click on a link to a malicious HTML page, which will be rendered by the client's browser. The malicious HTML, when rendered, will fetch data from the vulnerable server and then send it to the malicious webserver. 
+            </p>
+			<img class="figure" src="JSONP_Malicious.png" />
+
+
+			<p><em>
+				Note: A very simple but valuable tool is Firefox's Web Developer tools. In particular, the Network tab will provide some more insight as to how the application works. You can access this by pressing <code>Ctrl+Shift+E</code> when in the Firefox browser. Every time you load a page, you will see the HTTP requests that were sent to get there. Try this while clicking the link after logging into the site. You should see two requests, one directed at the "action" url and one directed at the "view" url.
+			</em></p>
+
+			<h3 id="inspect" class="steps">Inspect the Program Code</h3>
+			<p>
+				Now that you understand the basic behavior of the program, it's time to look at the implementation. As mentioned above, this program is implemented in three files. Use your favorite <a href="../text_editors.html">text editor</a> to open them. Enter the following command to open each file in Vi:
+			</p>
+
+			<pre><code>$ vi vulnerable.py
+$ vi evil.py
+$ vi templates/index.html</code></pre>
+
+			<p>
+				As you look through the code and trace the diagram, start to consider the following questions: what could I do if I had access to specify a callback function? How would this attack work if session tokens were stored as cookies, or passed in as parameters?
+			</p>
+			
+			<h3 id="exploit" class="steps">Exploit the Vulnerability</h3>
+			<p>
+				
+			</p>
+
+			<p>
+				To test this exploit, we will need three things: the vulnerable server, the malicious webserver, and a malicious webpage. First, run the server as we did in <a href="#run">Run the Program</a>. Next, edit <code>templates/index.html</code> to include our malicious <code>src</code> URI (this should include the URI to the vulnerable webserver, as well as a callback parameter <code>?callback=&ltfunction you'd like to run&gt</code>). Showing you have access to specify a callback function is cool, but what nasty things can we do with it? Try using the <code>fetch</code> API to send the data to the malicious webserver. Now, make sure you can see the <code>evil.py</code> server command line interface while you open <code>localhost:5001</code> in one browser tab.
+			</p>
+
+			<p>
+				Congratulations! You've exploited JSONP on a vulnerable server!
+			</p>
+			
+			<h3 id="mitigate" class="steps">Mitigate the Vulnerability</h3>
+
+            <p>
+                To mitigate this attack,  we will have to restructure the architecture of our application. We need to restrict front end requests to a webserver in the same origin. This means that we will have to set up an endpoint to access an external API. In <code>mitigated.py</code>, lets access the data returned by <code>vulnerable.py</code> without using JSONP. Using the <a href="http://docs.python-requests.org/en/master/">requests</a> library, implement an API call to <code>vulnerable.py</code>, and then return that to the front end for Flask to render (using jinja2). To communicate data from the backend to the front end, you will need to use the <code>render_template</code> method from Flask. Here is an example of communicating data from the backend to the front end:
+            </p>
+<pre><code>
+from flask import Flask, render_template
+...
+...
+return render_template('mitigated.html', <strong>dataToTheFrontEnd</strong>=&ltdata you'd like to return to front end&gt)
+</code></pre>
+			From <code>mitigated.html</code>, you can access the returned data like so:
+<pre><code>
+!&lt-- standard HTML above and below --&gt
+&ltp&gt Your data is: {{ <strong>dataToTheFrontEnd</strong> }} &lt/p&gt
+</code></pre>
+
+			The key is that the named return variable, <code>dataToTheFrontEnd</code>, is referenced in between the <code>{{ }}</code> brackets.
+
+			<p>
+				Congratulations! You have mitigated the JSONP vulnerability!
+			</p>
+		</div>
+	</body>
+</html>
