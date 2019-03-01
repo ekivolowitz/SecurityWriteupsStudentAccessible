@@ -1,7 +1,7 @@
 # JSONP Vulnerabilities
 ## The Wild West
 Long ago there were no protections against cross origin data requests. 
-This meant that you could grab information from any site with XMLHttpRequests (AJAX),
+This meant that you could grab information from any site with XMLHttpRequests,
 which was a much desired feature for developing websites. This let you shift getting data
 from external APIs to the front end, instead of having to set up a backend service to 
 act as a middle man for fetching data. 

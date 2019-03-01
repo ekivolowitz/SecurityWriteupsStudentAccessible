@@ -17,11 +17,28 @@
 			</p>
 
 			<h3 id="description">Exercise Description</h3>
-			<p>Before we get into details, </p>
+			<p>Before we get into details, let's take a look at a valid use of JSONP, and get a little bit of history about why it was used. In the early 2000s there were no protections against cross origin data requests. This meant that you could grab information from any server with XMLHttpRequests, which was a much desired feature for developing websites. This let you shift getting data from external APIs to the front end, instead of having to set up a backend service to fetch it. This was a form of shifting work onto the client, reducing the server costs for hosts.</p>
+
+			<p>Developers soon discovered that it's a security risk to allow fetching data from other webservers was dangerous in the front end, so all browsers implemented a Same Origin Policy (SOP). This blocked browsers from rendering content from websites that make requests to URIs that aren't of the same origin (domain, port, and protocol).</p>
+
+			<p>In response, developers decided to circumnavigate the SOP by inserting the desired return data as an argument to a function call, and returning that to the user. This meant that they could sneak their data in over the <code>script</code> tag. Here's an example of a legitimate use of JSONP.</p> 
+
+			<img class="figure" src="JSONP_Not_Malicious.png"/>
+
+			<p>The client first visits a page, which returns HTML that includes a <code>script</code> tag to call an external server. That external server then returns the data wrapped in a callback function, which is ran by the client's browser.</p>
+
+			<p>The objective of this exercise is to craft an evil page that a client would click on, which would then make a call to another server they are authenticated with, collect data, and return it to the malicious server.</p>
+
+			<p>
+				Here is a diagram representing the attack. In this diagram, the first step is for the user to authenticate with a website. Then, the user needs to click on a link to a malicious HTML page, which will be rendered by the client's browser. The malicious HTML, when rendered, will fetch data from the vulnerable server and then send it to the malicious webserver. 
+			</p>
+			<img class="figure" src="JSONP_Malicious.png" />
 			
 			<p>
-                In this exercise, we provide a two small HTTP servers developed using Flask, a python HTTP microframework.  The first server, <code>vulnerable.py</code>, returns static json wrapped in a provided callback function to anyone who makes a GET request to it. The second server, <code>evil.py</code>, provides an evil HTML file that will send data from the user's browser to the evil webserver. These naive servers do not have any form of authentication or support querying data. For the purposes of this exercise, we will not consider the implications of these traits. Instead,we will focus on the potential for cross site request forgery. Your objective is to craft a request forgery that will act on behalf of the client to send data from the vulnerable web server to malicious web server.
+                In this exercise, we provide a two small HTTP servers developed using Flask, a python HTTP microframework.  The first server, <code>vulnerable.py</code>, returns static JSON wrapped in a provided callback function to anyone who makes a GET request to it. The second server, <code>evil.py</code>, provides an evil HTML file that will send data from the user's browser to the evil webserver. These naive servers do not have any form of authentication or support querying data. For the purposes of this exercise, we will not consider the implications of these traits. Instead,we will focus on the potential for cross site request forgery. Your objective is to craft a request forgery that will act on behalf of the client to send data from the vulnerable web server to malicious web server.
 			</p>
+
+			
 
 			<p>
                 The program has three source files: <code>vulnerable.py</code>, <code>evil.py</code>, and <code>templates/index.html</code>. The first server, <code>vulnerable.py</code>, will run on <code>localhost:5000</code> while the second, <code>evil.py</code>, will run on <code>localhost:5001</code>. The following table summarizes each file's purpose.
@@ -36,7 +53,7 @@
 				<tr>
 					<td><code>vulnerable.py</code></td>
 					<td><code>localhost:5000</code></td>
-					<td>Returns JSONP to a calling client.<b> You will not need to change this file.</b></td>
+					<td>Returns JSONP to a calling client.<b> You will need to change this file to complete the mitigation.</b></td>
 				</tr>
 				<tr>
 					<td><code>evil.py</code></td>
@@ -51,10 +68,10 @@
                 <tr>
 					<td><code>mitigated.py</code></td>
 					<td><code>localhost:5002</code></td>
-					<td>Server to be used to demonstare the mitigation of a JSONP attack. <b>You will need to modify this file to complete the mitigation.</td>
+					<td>Server to be used to demonstate the mitigation of a JSONP attack. <b>You will need to modify this file to complete the mitigation.</b></td>
 				</tr>
 				<tr>
-						<td><code>mitigated.html</code></td>
+						<td><code>templates/mitigated.html</code></td>
 						<td><code>localhost:5002</code></td>
 						<td>Webpage rendered by <code>mitigated.py</code>, which accesses data from <code>localhost:5000</code> without JSONP.</b></td>
 					</tr>
@@ -62,24 +79,21 @@
 			</table>
 
 			<h3 id="mitigation_description">Vulnerability Mitigation</h3>
-			<p>
-				Two common protections against cross site request forgery are checking origin headers and implementing session-specific synchronizer tokens. For a nearly comprehensive approach to cross site request forgery mitigation, see the <a href="https://www.owasp.org/index.php/Cross-Site_Request_Forgery_(CSRF)_Prevention_Cheat_Sheet">OWASP Cross Site Request Forgery Prevention Cheat Sheet</a>. In many situations, it is preferred to use existing frameworks or libraries to protect against cross site request forgeries.
-			</p>
 
 			<p>
-				For this exercise, however, we will take a different approach. The goal of JSONP is to render data from a different origin. To do this, we will set up a proxy to fetch the desired data in the backend within the same origin, and then return that to the front end. 
+				The goal of JSONP is to render data from a different origin. Our goal is to maintain the same end result, but doing so securely. To do this, we will set up a proxy to fetch the desired data in the backend within the same origin, and then return that to the front end. Thus, we are shifting the load of getting data from the client onto our webserver.
 			</p>
 
 			<h2 id="instructions">Exercise Instructions</h2>
 			<p>
-				This exercise will be completed in the web browser and on the command line terminal of the provided virtual machine. To open the terminal, right-click on the "EXERCISES" directory and select "Open in Terminal". Then open one more terminal tab with <code>ctrl+shift+t</code> to have two tabs running. Enter the following command in each tab to change into the exercise directory:
+				This exercise will be completed in the web browser and on the command line terminal of the provided virtual machine. To open the terminal, right-click on the <code>EXERCISES</code> directory and select <code>Open in Terminal</code>. Then open one more terminal tab with <code>ctrl+shift+t</code> to have two tabs running. Enter the following command in each tab to change into the exercise directory:
 			</p>
 
 			<pre><code>$ cd 3.9.3_JSONP</code></pre>
 
 			<h3 id="compile" class="steps">Compile the Program</h3>
 			<p>
-                Python interprets your code at runtime, so there is no compilation step needed.
+                Python interprets your code at runtime, so there is no compilation step.
 			</p>
 			
 			<h3 id="run" class="steps">Run the Program</h3>
@@ -89,21 +103,33 @@
 
 			<pre><code>$ python3 vulnerable.py</code></pre>
 
+			<p>You should then see the following:</p>
+
+			<pre><code>
+* Serving Flask app "&ltname of server&gt" (lazy loading)
+* Environment: production
+	WARNING: Do not use the development server in a production environment.
+	Use a production WSGI server instead.
+* Debug mode: off
+* Running on http://127.0.0.1:5001/ (Press CTRL+C to quit)			   
+			</code></pre>
+
+			<p>Your terminal should be taken over.</p>
+
             <p>
-                In the second terminal tab, run the other server likeso:
+                In the second terminal tab, run the other server the same way:
             </p>
 
-            <pre><code>$ python3 evil.py</code></pre>
+			<pre><code>$ python3 evil.py</code></pre>
+			
+			<p>You will again see similar output.</p>
 
 			<p>
-                To stop either server, type <code>ctrl+c</code> in the command line interface. Currently, <code>vulnerable.py</code> does not have a web interface. If you visit <code>localhost:5000</code>, you will see JSON. The server is in place to simply return JSONP as a contrived example of what a production webserver may do. However, the evil webserver, <code>evil.py</code> has a web interface that you can visit by going to <code>localhost:5001</code> while <code>localhost:5000</code> is running.
+                To stop either server, type <code>ctrl+c</code> in the command line interface. Currently, <code>vulnerable.py</code> does not have a web interface. If you visit <code>localhost:5000</code>, you JSONP will be returned and be visible in the top left corner of your screen. The server is in place to simply return JSONP as a contrived example of what a production webserver may do. However, the evil webserver, <code>evil.py</code> has a web interface that you can visit by going to <code>localhost:5001</code> while <code>localhost:5000</code> is running.
                 To view the web site, open Firefox by clicking the globe icon in the bottom left hand corner of the screen. The malicious server is attached to <code>http://localhost:5001</code>.
 			</p>
 
-            <p>
-                Here is a diagram representing the attack. The first step is for the user to authenticate with a vulnerable website. Then, the user needs to click on a link to a malicious HTML page, which will be rendered by the client's browser. The malicious HTML, when rendered, will fetch data from the vulnerable server and then send it to the malicious webserver. 
-            </p>
-			<img class="figure" src="JSONP_Malicious.png" />
+            
 
 
 			<p><em>
@@ -112,7 +138,7 @@
 
 			<h3 id="inspect" class="steps">Inspect the Program Code</h3>
 			<p>
-				Now that you understand the basic behavior of the program, it's time to look at the implementation. As mentioned above, this program is implemented in three files. Use your favorite <a href="../text_editors.html">text editor</a> to open them. Enter the following command to open each file in Vi:
+				Now that you understand the basic behavior of the program, it's time to look at the implementation. As mentioned above, this program is implemented in three files. Use your favorite <a href="../text_editors.html">text editor</a> to open them. Enter the following command to open each file in vi:
 			</p>
 
 			<pre><code>$ vi vulnerable.py
@@ -120,7 +146,7 @@ $ vi evil.py
 $ vi templates/index.html</code></pre>
 
 			<p>
-				As you look through the code and trace the diagram, start to consider the following questions: what could I do if I had access to specify a callback function? How would this attack work if session tokens were stored as cookies, or passed in as parameters?
+				<strong>As you look through the code and trace the diagram, start to consider the following questions</strong>: what could I do if I had access to specify a callback function? What could a malicious user do if this attack used session tokens as cookies?
 			</p>
 			
 			<h3 id="exploit" class="steps">Exploit the Vulnerability</h3>
@@ -128,8 +154,10 @@ $ vi templates/index.html</code></pre>
 				
 			</p>
 
+			<p>You will have a successful exploit if you can have a user visit the malicious page, which will trigger the data from <code>vulnerable.py</code> to appear in <code>stdout</code> of the terminal window running <code>evil.py</code>. To complete this exploit, you will need to modify <code>evil.py</code> and <code>templates/evil.html</code></code></p>
+
 			<p>
-				To test this exploit, we will need three things: the vulnerable server, the malicious webserver, and a malicious webpage. First, run the server as we did in <a href="#run">Run the Program</a>. Next, edit <code>templates/index.html</code> to include our malicious <code>src</code> URI (this should include the URI to the vulnerable webserver, as well as a callback parameter <code>?callback=&ltfunction you'd like to run&gt</code>). Showing you have access to specify a callback function is cool, but what nasty things can we do with it? Try using the <code>fetch</code> API to send the data to the malicious webserver. Now, make sure you can see the <code>evil.py</code> server command line interface while you open <code>localhost:5001</code> in one browser tab.
+				To test this exploit, we will need three things: the vulnerable server, the malicious webserver, and a malicious webpage. First, run the server as we did in <a href="#run">Run the Program</a>. Next, edit <code>templates/evil.html</code> to include our malicious <code>src</code> URI (this should include the URI to the vulnerable webserver, as well as a callback parameter <code>?callback=&ltfunction you'd like to run&gt</code>). Showing you have access to specify a callback function is cool, but what nasty things can we do with it? Try using the <code>fetch</code> <a href="https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API/Using_Fetch">API</a> to POST  data to the malicious webserver. Now, make sure you can see the <code>evil.py</code> server command line interface while you open <code>localhost:5001</code> in one browser tab.
 			</p>
 
 			<p>
@@ -138,18 +166,24 @@ $ vi templates/index.html</code></pre>
 			
 			<h3 id="mitigate" class="steps">Mitigate the Vulnerability</h3>
 
+			<p>A successful mitigation of this exploit will have a webpage that will be able to render the data from <code>localhost:5000</code> (<code>vulnerable.py</code>) without using JSONP. You will need to modify <code>vulnerable.py</code>, <code>templates/mitigated.html</code>, and <code>mitigated.py</code>.</p>
+
             <p>
-                To mitigate this attack,  we will have to restructure the architecture of our application. We need to restrict front end requests to a webserver in the same origin. This means that we will have to set up an endpoint to access an external API. In <code>mitigated.py</code>, lets access the data returned by <code>vulnerable.py</code> without using JSONP. Using the <a href="http://docs.python-requests.org/en/master/">requests</a> library, implement an API call to <code>vulnerable.py</code>, and then return that to the front end for Flask to render (using jinja2). To communicate data from the backend to the front end, you will need to use the <code>render_template</code> method from Flask. Here is an example of communicating data from the backend to the front end:
+                To mitigate this attack,  we will have to restructure the architecture of our application. We need to restrict front end requests to a webserver in the same origin. This means that we will have to set up an endpoint to access an external API. In <code>mitigated.py</code>, lets access the data returned by <code>vulnerable.py</code> without using JSONP. All that is needed to change in <code>vulnerable.py</code> is removing the <code>@jsonp</code> annotation. Simply returning the JSON will suffice for the <code>test()</code> function. In <code>mitigated.py</code>, use the <a href="http://docs.python-requests.org/en/master/">requests</a> library to implement an API call to <code>localhost:5000</code>(<code>vulnerable.py</code>), and then return that to the front end for Flask to render. To communicate data from the backend to the front end, you will need to use the <code>render_template</code> method from Flask. Here is an example of communicating data from the backend to the front end:
             </p>
 <pre><code>
+# this is the Flask backend
 from flask import Flask, render_template
 ...
 ...
-return render_template('mitigated.html', <strong>dataToTheFrontEnd</strong>=&ltdata you'd like to return to front end&gt)
+def run():
+	...
+	return render_template('mitigated.html', <strong>dataToTheFrontEnd</strong>=&ltdata you'd like to return to front end&gt)
 </code></pre>
 			From <code>mitigated.html</code>, you can access the returned data like so:
 <pre><code>
-!&lt-- standard HTML above and below --&gt
+&lt!-- This is the front end HTML. Flask will use a templating engine (jinja2)
+ to render the HTML and serve it to the front end. --&gt
 &ltp&gt Your data is: {{ <strong>dataToTheFrontEnd</strong> }} &lt/p&gt
 </code></pre>
 

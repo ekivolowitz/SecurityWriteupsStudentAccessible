@@ -17,11 +17,14 @@
 #
 # Date        Author              Ref    Revision 
 # 02/19/2019  Evan Kivolowitz      1     Created prototype of project.
+# 02/28/2019  Evan Kivolowitz	   2	 Added a hint.
 #
 ######################################################################
 from flask import Flask, render_template
 import requests
 app = Flask(__name__)
+
+# You may see that both render_template and requests are imported but not used *wink wink*.
 
 @app.route("/")
 def run():

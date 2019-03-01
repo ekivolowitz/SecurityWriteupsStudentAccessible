@@ -21,7 +21,6 @@
 #
 ######################################################################
 from flask import Flask, request, render_template, jsonify
-from pprint import pprint
 app = Flask(__name__)
 
 @app.route("/")
@@ -32,7 +31,8 @@ def hello():
 def run():
     # Fill out this method to accept posts requests.
     # Simply print the body data to show you have successfully 
-    # stolen it.
+    # stolen it. You can use the pprint function to pretty print the json
+    # or simply cast it to a string and print it.
     return "Thank you for the data!"
 
 
