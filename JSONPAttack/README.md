@@ -47,7 +47,3 @@ Modern sites are not susceptible to this because modern servers don't implement 
 To achieve the same result (getting cross origin information), it is recommended that you make a proxy server within your origin that can ping an external entity, then return that to the front end.
 
 In addition to SOP, there are now [Cross Origin Resource Sharing policies](https://en.wikipedia.org/wiki/Cross-origin_resource_sharing) (CORS) that defines how a browser and server can interact. The CORS policies are now attatched in HTTP Request and Response headers to define the interaction. 
-
-
-### TODO
-* Download VM from fpva_vm with and without solutions. Then generate the solution and student version and upload it to the virtual_machines/ directory. 
