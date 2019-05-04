@@ -15,7 +15,7 @@ The SOP disallowed communications from sources with different domain names, prot
 prevented attackers from creating CSRF AJAX interceptions because the browser would recognize that the user
 unknowingly was trying to load code referencing another origin. In most cases, a good site would not try 
 to do that. Some legitimate uses of a cross origin request could be
-* Hitting an endpoint on a different subdomain, say `api.foo.com` from `foo.com`
+* Hitting an endpoint on a different subdomain, say `api.foo.com` from `foo.com`.
 * Loading data from an API from the front end.
 To bypass this, developers started using Javascript Serialized Object Notation with Padding (JSONP).
 ## JSONP? Never Heard Of It
